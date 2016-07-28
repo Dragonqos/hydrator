@@ -1,0 +1,36 @@
+{
+  "name": "ecomitize/hydrator",
+  "description": "Simple Hydrator",
+  "type": "project",
+  "license": "No License",
+  "authors": [
+    {
+      "name": "Vlad Bukhanevich",
+      "email": "vlad@ecomitize.com"
+    }
+  ],
+  "require": {
+    "php": ">=5.6",
+    "monolog/monolog": "1.17.2"
+  },
+  "require-dev": {
+    "silex/silex": "~2.0",
+    "symfony/config": "^3.0",
+    "phpunit/phpunit": "~5.2|~4.8"
+  },
+  "config": {
+    "preferred-install": "dist",
+    "bin-dir": "bin"
+  },
+  "autoload": {
+    "psr-4": {
+      "Hydrator\\": ["src/"]
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Hydrator\\": ["tests/unit/"]
+    }
+  },
+  "minimum-stability": "dev"
+}
