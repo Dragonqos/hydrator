@@ -2,7 +2,7 @@
 
 namespace Hydrator\Strategy;
 
-class FloatStrategy extends StrategyAbstract
+class IntegerStrategy extends StrategyAbstract
 {
     /**
      * @param      $value The value that should be converted.
@@ -12,7 +12,7 @@ class FloatStrategy extends StrategyAbstract
      */
     public function extract($value, $data = null)
     {
-        return (float) $value;
+        return (int) $value;
     }
 
     /**
@@ -24,6 +24,6 @@ class FloatStrategy extends StrategyAbstract
      */
     public function hydrate($name, $value, $entity = null)
     {
-        return (float) $value;
+        return (int) $value;
     }
 }

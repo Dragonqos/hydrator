@@ -37,14 +37,22 @@ class HydrateStrategyTest extends ProviderTest
         ], $result);
     }
 
-    public function testHydrateOne()
+    public function testHydrateName()
     {
         /** @var Hydrator $hydrator */
         $hydrator = $this->app['hydrator.factory']('test');
 
-        list($key, $value) = $hydrator->hydrateOne(['number_type' => '123'], 'numberType');
+        $key = $hydrator->hydrateName('number_type');
 
         $this->assertEquals('numberType', $key);
+    }
+
+    public function testHydrateValue()
+    {
+        /** @var Hydrator $hydrator */
+        $hydrator = $this->app['hydrator.factory']('test');
+
+        $value = $hydrator->hydrateValue('number_type', '123');
         $this->assertEquals(123, $value);
     }
 

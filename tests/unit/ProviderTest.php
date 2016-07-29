@@ -28,14 +28,10 @@ class ProviderTest extends WebTestCase
             'Hydrator\Strategy\FloatStrategy' => 'float_type'
         ],
         'numberType' => [
-            'Hydrator\Strategy\NumberStrategy' => 'number_type'
+            'Hydrator\Strategy\IntegerStrategy' => 'number_type'
         ],
-        'methodType' => [
-            'Hydrator\Strategy\MethodStrategy' => 'callMe'
-        ],
-        'objectType' => [
-            'Hydrator\Strategy\DefaultStrategy' => 'object_type'
-        ],
+        'methodType' => 'callMe',
+        'objectType' => 'object_type',
         'sub' => [
             '~subScheme' => 'inner'
         ],

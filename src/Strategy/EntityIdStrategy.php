@@ -5,27 +5,29 @@ namespace Hydrator\Strategy;
 class EntityIdStrategy extends StrategyAbstract implements StrategyInterface
 {
     /**
-     * @param $value
+     * @param      $value The value that should be converted.
+     * @param null $data  The object is optionally provided as context.
      *
-     * @return mixed
+     * @return bool
      */
-    public function extract($value)
+    public function extract($value, $data = null)
     {
         return $value;
     }
 
     /**
-     * @param $entity
-     * @param $value
+     * @param      $name   The name of the strategy to use.
+     * @param null $value  The value that should be converted.
+     * @param null $entity The object is optionally provided as context.
      *
-     * @return string
+     * @return int
      */
-    public function hydrate($entity, $value)
+    public function hydrate($name, $value, $entity = null)
     {
-        if(property_exists($entity, $value)) {
-            return $entity->$value;
+        if(is_object($value)) {
+            return (string) $value;
         }
 
-        return null;
+        return $value;
     }
 }

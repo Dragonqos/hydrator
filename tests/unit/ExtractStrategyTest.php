@@ -14,14 +14,22 @@ class ExtractStrategyTest extends ProviderTest
         $this->assertEquals(['group_id' => '123', 'external_id' => 123, 'boolean_type' => true], $result);
     }
 
-    public function testExtractOne()
+    public function testExtractName()
     {
         /** @var Hydrator $hydrator */
         $hydrator = $this->app['hydrator.factory']('test');
 
-        list($key, $value) = $hydrator->extractOne('numberType', '123');
+        $key = $hydrator->extractName('numberType');
 
         $this->assertEquals('number_type', $key);
+    }
+
+    public function testExtractValue()
+    {
+        /** @var Hydrator $hydrator */
+        $hydrator = $this->app['hydrator.factory']('test');
+
+        $value = $hydrator->extractValue('numberType', '123');
         $this->assertEquals(123, $value);
     }
 
@@ -31,7 +39,8 @@ class ExtractStrategyTest extends ProviderTest
         $hydrator = $this->app['hydrator.factory']('test');
 
         $result = $hydrator->extract(['id' => 123, 'sub' => ['Telephone' => '+380']]);
-        $this->assertEquals(['_id' => 123, 'inner' => ['tel' => '+380']], $result);    }
+        $this->assertEquals(['_id' => 123, 'inner' => ['tel' => '+380']], $result);
+    }
 
     public function testExtractSubArray()
     {

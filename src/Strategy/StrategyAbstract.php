@@ -8,11 +8,6 @@ abstract class StrategyAbstract implements StrategyInterface
      * @var
      */
     protected $app;
-
-    /**
-     * @var
-     */
-    protected $prefs;
     
     /**
      * @param $app
@@ -28,13 +23,5 @@ abstract class StrategyAbstract implements StrategyInterface
     public function getApp()
     {
         return $this->app;
-    }
-
-    /**
-     * @param $prefs
-     */
-    public function setPrefs($prefs)
-    {
-        $this->prefs = $prefs;
     }
 }

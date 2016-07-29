@@ -5,29 +5,26 @@ namespace Hydrator\Strategy;
 class BooleanStrategy extends StrategyAbstract
 {
     /**
-     * @param $value
+     * @param      $value The value that should be converted.
+     * @param null $data  The object is optionally provided as context.
      *
-     * @return mixed
+     * @return bool
      */
-    public function extract($value)
+    public function extract($value, $data = null)
     {
-        return (bool) $this->stringToBool($value);
+        return (bool)$this->stringToBool($value);
     }
 
     /**
-     * @param $entity
-     * @param $value
+     * @param      $name   The name of the strategy to use.
+     * @param null $value  The value that should be converted.
+     * @param null $entity The object is optionally provided as context.
      *
-     * @return int|null
+     * @return int
      */
-    public function hydrate($entity, $value)
+    public function hydrate($name, $value, $entity = null)
     {
-        if (property_exists($entity, $value)) {
-            // call delegate Mutator call to object
-            return (int) $this->stringToBool($entity->$value);
-        }
-
-        return null;
+        return (int)$this->stringToBool($value);
     }
 
     /**
@@ -45,6 +42,6 @@ class BooleanStrategy extends StrategyAbstract
             return false;
         }
 
-        return (bool) $value;
+        return (bool)$value;
     }
 }

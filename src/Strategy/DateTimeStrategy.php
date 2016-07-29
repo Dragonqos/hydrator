@@ -10,13 +10,14 @@ class DateTimeStrategy extends StrategyAbstract
      * @var string
      */
     protected $dateFormat = 'Y-m-d H:i:s';
-
+    
     /**
-     * @param $value
+     * @param      $value The value that should be converted.
+     * @param null $data  The object is optionally provided as context.
      *
-     * @return mixed
+     * @return bool
      */
-    public function extract($value)
+    public function extract($value, $data = null)
     {
         // If this value is an integer, we will assume it is a UNIX timestamp's value
         // and format a DateTime object from this timestamp. This allows flexibility
@@ -40,32 +41,27 @@ class DateTimeStrategy extends StrategyAbstract
     }
 
     /**
-     * @param $entity
-     * @param $value
+     * @param      $name   The name of the strategy to use.
+     * @param null $value  The value that should be converted.
+     * @param null $entity The object is optionally provided as context.
      *
-     * @return int|null
+     * @return int
      */
-    public function hydrate($entity, $value)
+    public function hydrate($name, $value, $entity = null)
     {
-        if (property_exists($entity, $value) && $entity->$value) {
-
-            $val = $entity->$value;
-
-            if ($val instanceof UTCDatetime) {
-                $val = $val->toDateTime();
-            }
-
-            if ($val instanceof \DateTime) {
-                return $val->getTimestamp();
-            }
-
-            if(is_numeric($val)) {
-                return $val;
-            }
-
-            return strtotime($val);
+        if ($value instanceof UTCDatetime) {
+            $value = $value->toDateTime();
         }
 
-        return null;
+        if ($value instanceof \DateTime) {
+            return $value->getTimestamp();
+        }
+
+        if (is_numeric($value)) {
+            return $value;
+        }
+
+        return strtotime($value);
+
     }
 }
