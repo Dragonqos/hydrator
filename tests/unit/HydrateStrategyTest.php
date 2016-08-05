@@ -14,24 +14,18 @@ class HydrateStrategyTest extends ProviderTest
         $this->assertEquals(['group_id' => '123', 'external_id' => 123, 'boolean_type' => true], $result);
     }
 
-//    public function testHydrateName()
-//    {
-//        /** @var Hydrator $hydrator */
-//        $hydrator = $this->app['hydrator.factory']('test');
-//
-//        $key = $hydrator->hydrateName('numberType');
-//
-//        $this->assertEquals('number_type', $key);
-//    }
-//
-//    public function testHydrateValue()
-//    {
-//        /** @var Hydrator $hydrator */
-//        $hydrator = $this->app['hydrator.factory']('test');
-//
-//        $value = $hydrator->hydrateValue('numberType', '123');
-//        $this->assertEquals(123, $value);
-//    }
+    public function testHydrateToObject()
+    {
+        /** @var Hydrator $hydrator */
+        $hydrator = $this->app['hydrator.factory']('test');
+        
+        $stdClass = new \stdClass();
+        $result = $hydrator->hydrate(['groupId' => '123', 'externalId' => 123, 'booleanType' => 1], $stdClass);
+        $this->assertEquals((object) ['group_id' => '123', 'external_id' => 123, 'boolean_type' => true], $result);
+
+        $result = $hydrator->hydrate(['groupId' => '123', 'externalId' => 123, 'booleanType' => 1], 'stdClass');
+        $this->assertEquals((object) ['group_id' => '123', 'external_id' => 123, 'boolean_type' => true], $result);
+    }
 
     public function testHydrateSub()
     {

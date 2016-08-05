@@ -172,9 +172,18 @@ class Hydrator
             return $result;
         }
 
+        $fillObject = function($object, $values) {
+            foreach($values as $name => $value) {
+                $object->$name = $value;
+            }
+
+            return $object;
+        };
+
         // It could be a Class definition
         if (is_string($entity) && class_exists($entity)) {
-            return new $entity($result);
+            $entity = new $entity();
+            return $fillObject($entity, $result);
         }
 
         if (is_object($entity) && $entity instanceof \Serializable) {
@@ -183,6 +192,10 @@ class Hydrator
 
         if (is_object($entity) && method_exists($entity, 'fill')) {
             return $entity->fill($result);
+        }
+
+        if(is_object($entity)) {
+            return $fillObject($entity, $result);
         }
 
         return $entity;

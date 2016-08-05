@@ -37,25 +37,6 @@ class ExtractStrategyTest extends ProviderTest
         ], $result);
     }
 
-//    public function testExtractName()
-//    {
-//        /** @var Hydrator $hydrator */
-//        $hydrator = $this->app['hydrator.factory']('test');
-//
-//        $key = $hydrator->extractName('number_type');
-//
-//        $this->assertEquals('numberType', $key);
-//    }
-//
-//    public function testExtractValue()
-//    {
-//        /** @var Hydrator $hydrator */
-//        $hydrator = $this->app['hydrator.factory']('test');
-//
-//        $value = $hydrator->extractValue('number_type', '123');
-//        $this->assertEquals(123, $value);
-//    }
-//
     public function testExtractSub()
     {
         /** @var Hydrator $hydrator */
