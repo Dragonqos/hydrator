@@ -151,34 +151,6 @@ class HydratorItemMap
     }
 
     /**
-     * @return mixed|null
-     */
-    public function getChildren()
-    {
-        if($this->hasChildren()) {
-            return $this->map['children'];
-        }
-
-        return null;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function hasManyChildren()
-    {
-        return $this->map['hasManyChildren'];
-    }
-
-    /**
-     * @return mixed
-     */
-    public function hasChildren()
-    {
-        return $this->map['hasChildren'];
-    }
-
-    /**
      * @return array
      */
     public function toArray()
