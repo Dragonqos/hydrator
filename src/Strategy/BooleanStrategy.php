@@ -12,19 +12,18 @@ class BooleanStrategy extends StrategyAbstract
      */
     public function extract($value, $data = null)
     {
-        return (bool)$this->stringToBool($value);
+        return (int)$this->stringToBool($value);
     }
 
     /**
-     * @param      $name   The name of the strategy to use.
      * @param null $value  The value that should be converted.
      * @param null $entity The object is optionally provided as context.
      *
      * @return int
      */
-    public function hydrate($name, $value, $entity = null)
+    public function hydrate($value, $entity = null)
     {
-        return (int)$this->stringToBool($value);
+        return (bool)$this->stringToBool($value);
     }
 
     /**

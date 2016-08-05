@@ -2,7 +2,6 @@
 
 namespace Hydrator;
 
-use MongoDB\BSON\UTCDatetime;
 use Silex\Application;
 
 class HydrateStrategyTest extends ProviderTest
@@ -11,57 +10,36 @@ class HydrateStrategyTest extends ProviderTest
     {
         /** @var Hydrator $hydrator */
         $hydrator = $this->app['hydrator.factory']('test');
-        $result = $hydrator->hydrate(['group_id' => '123', 'external_id' => 123, 'boolean_type' => 1], ['groupId', 'externalId', 'booleanType']);
-        $this->assertEquals([
-            'groupId' => '123',
-            'externalId' => 123,
-            'booleanType' => 1
-        ], $result);
-        $this->assertInternalType('string', $result['groupId']);
-        $this->assertInternalType('integer', $result['externalId']);
-        $this->assertInternalType('integer', $result['booleanType']);
-
-        $result = $hydrator->hydrate(['group_id' => '123', 'external_id' => 123, 'boolean_type' => 1]);
-        $this->assertEquals([
-            'groupId' => '123',
-            'externalId' => 123,
-            'booleanType' => 1,
-            'id' => null,
-            'datetime' => null,
-            'floatType' => null,
-            'numberType' => null,
-            'methodType' => null,
-            'objectType' => null,
-            'sub' => null,
-            'subArray' => null
-        ], $result);
+        $result = $hydrator->hydrate(['groupId' => '123', 'externalId' => 123, 'booleanType' => 1]);
+        $this->assertEquals(['group_id' => '123', 'external_id' => 123, 'boolean_type' => true], $result);
     }
 
-    public function testHydrateName()
-    {
-        /** @var Hydrator $hydrator */
-        $hydrator = $this->app['hydrator.factory']('test');
-
-        $key = $hydrator->hydrateName('number_type');
-
-        $this->assertEquals('numberType', $key);
-    }
-
-    public function testHydrateValue()
-    {
-        /** @var Hydrator $hydrator */
-        $hydrator = $this->app['hydrator.factory']('test');
-
-        $value = $hydrator->hydrateValue('number_type', '123');
-        $this->assertEquals(123, $value);
-    }
+//    public function testHydrateName()
+//    {
+//        /** @var Hydrator $hydrator */
+//        $hydrator = $this->app['hydrator.factory']('test');
+//
+//        $key = $hydrator->hydrateName('numberType');
+//
+//        $this->assertEquals('number_type', $key);
+//    }
+//
+//    public function testHydrateValue()
+//    {
+//        /** @var Hydrator $hydrator */
+//        $hydrator = $this->app['hydrator.factory']('test');
+//
+//        $value = $hydrator->hydrateValue('numberType', '123');
+//        $this->assertEquals(123, $value);
+//    }
 
     public function testHydrateSub()
     {
         /** @var Hydrator $hydrator */
         $hydrator = $this->app['hydrator.factory']('test');
-        $result = $hydrator->hydrate(['_id' => 123, 'inner' => ['tel' => '+380']], ['id', 'sub']);
-        $this->assertEquals(['id' => 123, 'sub' => ['Telephone' => '+380']], $result);
+
+        $result = $hydrator->hydrate(['id' => 123, 'sub' => ['Telephone' => '+380']]);
+        $this->assertEquals(['_id' => 123, 'inner' => ['tel' => '+380']], $result);
     }
 
     public function testHydrateSubArray()
@@ -69,178 +47,141 @@ class HydrateStrategyTest extends ProviderTest
         /** @var Hydrator $hydrator */
         $hydrator = $this->app['hydrator.factory']('test');
 
-        $result = $hydrator->hydrate(['_id' => 123, 'innerArray' => [['tel' => '+7'], ['tel' => '+380']]], ['id', 'subArray']);
-        $this->assertEquals(['id' => 123, 'subArray' => [['Telephone' => '+7'], ['Telephone' => '+380']]], $result);
+        $result = $hydrator->hydrate(['id' => 123, 'subArray' => [['Telephone' => '+7'], ['Telephone' => '+380']]]);
+        $this->assertEquals(['_id' => 123, 'innerArray' => [['tel' => '+7'], ['tel' => '+380']]], $result);
     }
 
     public function testHydrateBooleanType()
     {
         /** @var Hydrator $hydrator */
         $hydrator = $this->app['hydrator.factory']('test');
-        $result = $hydrator->hydrate(['boolean_type' => true], ['booleanType']);
-        $this->assertEquals(['booleanType' => 1], $result);
+        $result = $hydrator->hydrate(['booleanType' => 'true']);
+        $this->assertEquals(['boolean_type' => true], $result);
 
-        $result = $hydrator->hydrate(['boolean_type' => '1'], ['booleanType']);
-        $this->assertEquals(['booleanType' => 1], $result);
+        $result = $hydrator->hydrate(['booleanType' => 2]);
+        $this->assertEquals(['boolean_type' => true], $result);
 
-        $result = $hydrator->hydrate(['boolean_type' => 2], ['booleanType']);
-        $this->assertEquals(['booleanType' => 1], $result);
+        $result = $hydrator->hydrate(['booleanType' => 'false']);
+        $this->assertEquals(['boolean_type' => false], $result);
 
-        $result = $hydrator->hydrate(['boolean_type' => 0], ['booleanType']);
-        $this->assertEquals(['booleanType' => 0], $result);
-
-        $result = $hydrator->hydrate(['boolean_type' => false], ['booleanType']);
-        $this->assertEquals(['booleanType' => 0], $result);
-
-        $result = $hydrator->hydrate(['boolean_type' => 'false'], ['booleanType']);
-        $this->assertEquals(['booleanType' => 0], $result);
+        $result = $hydrator->hydrate(['booleanType' => '0']);
+        $this->assertEquals(['boolean_type' => false], $result);
     }
 
     public function testHydrateDateTime()
     {
-        $timeStamp  = 1469636398;
+        $timeStamp = 1469636398;
         $timeString = '2016-07-27 16:19:58';
+        $dateString = '2016-07-27';
 
         /** @var Hydrator $hydrator */
         $hydrator = $this->app['hydrator.factory']('test');
-
-        $result = $hydrator->hydrate(['datetime' => \DateTime::createFromFormat('Y-m-d H:i:s', $timeString)]);
-        $this->assertArrayHasKey('datetime', $result);
-        $this->assertInternalType('int', $result['datetime']);
-        $this->assertEquals($timeStamp, $result['datetime']);
-
-        $result = $hydrator->hydrate(['datetime' => new UTCDatetime($timeStamp * 1000)]);
-        $this->assertArrayHasKey('datetime', $result);
-        $this->assertInternalType('int', $result['datetime']);
-        $this->assertEquals($timeStamp, $result['datetime']);
-
         $result = $hydrator->hydrate(['datetime' => $timeStamp]);
         $this->assertArrayHasKey('datetime', $result);
-        $this->assertInternalType('int', $result['datetime']);
-        $this->assertEquals($timeStamp, $result['datetime']);
+        $this->assertInternalType('object', $result['datetime']);
+        $this->assertInstanceOf(\DateTime::class, $result['datetime']);
+        /** @var \DateTime $datetime */
+        $datetime = $result['datetime'];
+        $this->assertEquals($datetime->getTimestamp(), $timeStamp);
+
 
         $result = $hydrator->hydrate(['datetime' => $timeString]);
         $this->assertArrayHasKey('datetime', $result);
-        $this->assertInternalType('int', $result['datetime']);
-        $this->assertEquals($timeStamp, $result['datetime']);
+        $this->assertInternalType('object', $result['datetime']);
+        $this->assertInstanceOf(\DateTime::class, $result['datetime']);
+        /** @var \DateTime $datetime */
+        $datetime = $result['datetime'];
+        $this->assertEquals($datetime->getTimestamp(), $timeStamp);
+
+
+        $result = $hydrator->hydrate(['datetime' => $dateString]);
+        $this->assertArrayHasKey('datetime', $result);
+        $this->assertInternalType('object', $result['datetime']);
+        $this->assertInstanceOf(\DateTime::class, $result['datetime']);
+        /** @var \DateTime $datetime */
+        $datetime = $result['datetime'];
+        $this->assertEquals($datetime->format('Y-m-d H:i:s'), '2016-07-27 00:00:00');
     }
 
     public function testHydrateFloatType()
     {
         /** @var Hydrator $hydrator */
         $hydrator = $this->app['hydrator.factory']('test');
+        $result = $hydrator->hydrate(['floatType' => 1]);
+        $this->assertEquals(['float_type' => 1.0], $result);
+        $this->assertInternalType('float', $result['float_type']);
 
-        $result = $hydrator->hydrate(['float_type' => 1]);
-        $this->assertArrayHasKey('floatType', $result);
-        $this->assertInternalType('float', $result['floatType']);
-        $this->assertEquals(1.0, $result['floatType']);
+        $result = $hydrator->hydrate(['floatType' => 2.1]);
+        $this->assertEquals(['float_type' => 2.1], $result);
+        $this->assertInternalType('float', $result['float_type']);
 
-        $result = $hydrator->hydrate(['float_type' => 2.1]);
-        $this->assertArrayHasKey('floatType', $result);
-        $this->assertInternalType('float', $result['floatType']);
-        $this->assertEquals(2.1, $result['floatType']);
+        $result = $hydrator->hydrate(['floatType' => '2.1']);
+        $this->assertEquals(['float_type' => 2.1], $result);
+        $this->assertInternalType('float', $result['float_type']);
 
-        $result = $hydrator->hydrate(['float_type' => '2.1']);
-        $this->assertArrayHasKey('floatType', $result);
-        $this->assertInternalType('float', $result['floatType']);
-        $this->assertEquals(2.1, $result['floatType']);
+        $result = $hydrator->hydrate(['floatType' => '2.1999999']);
+        $this->assertEquals(['float_type' => 2.1999999], $result);
+        $this->assertInternalType('float', $result['float_type']);
 
-        $result = $hydrator->hydrate(['float_type' => '2.1999999']);
-        $this->assertArrayHasKey('floatType', $result);
-        $this->assertInternalType('float', $result['floatType']);
-        $this->assertEquals(2.1999999, $result['floatType']);
-
-        $result = $hydrator->hydrate(['float_type' => 'test']);
-        $this->assertArrayHasKey('floatType', $result);
-        $this->assertInternalType('float', $result['floatType']);
-        $this->assertEquals(0.0, $result['floatType']);
+        $result = $hydrator->hydrate(['floatType' => 'test']);
+        $this->assertEquals(['float_type' => 0], $result);
+        $this->assertInternalType('float', $result['float_type']);
     }
 
     public function testHydrateEntityIdType()
     {
         /** @var Hydrator $hydrator */
         $hydrator = $this->app['hydrator.factory']('test');
+        $result = $hydrator->hydrate(['id' => 1]);
+        $this->assertEquals(['_id' => 1], $result);
+        $this->assertInternalType('integer', $result['_id']);
 
-        $result = $hydrator->hydrate(['_id' => 1]);
-        $this->assertArrayHasKey('id', $result);
-        $this->assertInternalType('integer', $result['id']);
-        $this->assertEquals(1, $result['id']);
+        $result = $hydrator->hydrate(['id' => '1']);
+        $this->assertEquals(['_id' => '1'], $result);
+        $this->assertInternalType('string', $result['_id']);
 
-        $result = $hydrator->hydrate(['_id' => '1']);
-        $this->assertArrayHasKey('id', $result);
-        $this->assertInternalType('string', $result['id']);
-        $this->assertEquals('1', $result['id']);
-
-        $result = $hydrator->hydrate(['_id' => 'customid']);
-        $this->assertArrayHasKey('id', $result);
-        $this->assertInternalType('string', $result['id']);
-        $this->assertEquals('customid', $result['id']);
+        $result = $hydrator->hydrate(['id' => 'customid']);
+        $this->assertEquals(['_id' => 'customid'], $result);
+        $this->assertInternalType('string', $result['_id']);
     }
 
     public function testHydrateNumberType()
     {
         /** @var Hydrator $hydrator */
         $hydrator = $this->app['hydrator.factory']('test');
+        $result = $hydrator->hydrate(['numberType' => 1]);
+        $this->assertEquals(['number_type' => 1], $result);
+        $this->assertInternalType('integer', $result['number_type']);
 
-        $result = $hydrator->hydrate(['number_type' => 1]);
-        $this->assertArrayHasKey('numberType', $result);
-        $this->assertInternalType('integer', $result['numberType']);
-        $this->assertEquals(1, $result['numberType']);
+        $result = $hydrator->hydrate(['numberType' => '1']);
+        $this->assertEquals(['number_type' => 1], $result);
+        $this->assertInternalType('integer', $result['number_type']);
 
-        $result = $hydrator->hydrate(['number_type' => '1']);
-        $this->assertArrayHasKey('numberType', $result);
-        $this->assertInternalType('integer', $result['numberType']);
-        $this->assertEquals(1, $result['numberType']);
+        $result = $hydrator->hydrate(['numberType' => '1.1']);
+        $this->assertEquals(['number_type' => 1], $result);
+        $this->assertInternalType('integer', $result['number_type']);
 
-        $result = $hydrator->hydrate(['number_type' => '1.1']);
-        $this->assertArrayHasKey('numberType', $result);
-        $this->assertInternalType('integer', $result['numberType']);
-        $this->assertEquals(1, $result['numberType']);
+        $result = $hydrator->hydrate(['numberType' => '33x']);
+        $this->assertEquals(['number_type' => 33], $result);
+        $this->assertInternalType('integer', $result['number_type']);
+    }
 
-        $result = $hydrator->hydrate(['number_type' => '33x']);
-        $this->assertArrayHasKey('numberType', $result);
-        $this->assertInternalType('integer', $result['numberType']);
-        $this->assertEquals(33, $result['numberType']);
+    public function testHydrateMethodType()
+    {
+        /** @var Hydrator $hydrator */
+        $hydrator = $this->app['hydrator.factory']('test');
+        $result = $hydrator->hydrate(['methodType' => 'test']);
+        $this->assertInternalType('string', $result['callMe']);
+        $this->assertEquals('test', $result['callMe']);
     }
 
     public function testHydrateDefaultType()
     {
         /** @var Hydrator $hydrator */
         $hydrator = $this->app['hydrator.factory']('test');
-
-        $result = $hydrator->hydrate(['object_type' => (object) ['key' => 'value']]);
-        $this->assertInternalType('array', $result['objectType']);
-        $this->assertEquals(['key' => 'value'], $result['objectType']);
-
-        $result = $hydrator->hydrate(['object_type' => (array) ['key' => 'value']]);
-        $this->assertInternalType('array', $result['objectType']);
-        $this->assertEquals(['key' => 'value'], $result['objectType']);
-
-        $result = $hydrator->hydrate(['object_type' => 'string']);
-        $this->assertInternalType('string', $result['objectType']);
-        $this->assertEquals('string', $result['objectType']);
-    }
-
-    public function testMethodStrategy()
-    {
-        /** @var Hydrator $hydrator */
-        $hydrator = $this->app['hydrator.factory']('test');
-
-        $result = $hydrator->hydrate(new HydrateObject());
-        $this->assertInternalType('string', $result['methodType']);
-        $this->assertEquals('success', $result['methodType']);
-    }
-}
-
-class HydrateObject {
-
-    public $_id = 1;
-
-    /**
-     * @return string
-     */
-    public function callMe()
-    {
-        return 'success';
+        $result = $hydrator->hydrate(['objectType' => (object)['key' => 'value']]);
+        $this->assertInternalType('object', $result['object_type']);
+        $this->assertInstanceOf(\stdClass::class, $result['object_type']);
+        $this->assertEquals('value', $result['object_type']->key);
     }
 }

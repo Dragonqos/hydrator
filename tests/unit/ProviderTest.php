@@ -86,13 +86,127 @@ class ProviderTest extends WebTestCase
         ], $result);
     }
 
+    public function testHydratorItemMap()
+    {
+        $scheme = $this->app['hydrator.scheme']->getScheme('test');
+        $mapConfig = $this->app['hydrator.item.map']($scheme);
+
+        $expected = [
+            [
+                'dirtyName' => 'id',
+                'clearName' => '_id',
+                'strategyClassName' => 'Hydrator\Strategy\EntityIdStrategy',
+                'hasChildren' => false,
+                'hasManyChildren' => false,
+                'children' => false
+            ],
+            [
+                'dirtyName' => 'groupId',
+                'clearName' => 'group_id',
+                'strategyClassName' => 'Hydrator\Strategy\DefaultStrategy',
+                'hasChildren' => false,
+                'hasManyChildren' => false,
+                'children' => false
+            ],
+            [
+                'dirtyName' => 'externalId',
+                'clearName' => 'external_id',
+                'strategyClassName' => 'Hydrator\Strategy\DefaultStrategy',
+                'hasChildren' => false,
+                'hasManyChildren' => false,
+                'children' => false
+            ],
+            [
+                'dirtyName' => 'booleanType',
+                'clearName' => 'boolean_type',
+                'strategyClassName' => 'Hydrator\Strategy\BooleanStrategy',
+                'hasChildren' => false,
+                'hasManyChildren' => false,
+                'children' => false
+            ],
+            [
+                'dirtyName' => 'datetime',
+                'clearName' => 'datetime',
+                'strategyClassName' => 'Hydrator\Strategy\DateTimeStrategy',
+                'hasChildren' => false,
+                'hasManyChildren' => false,
+                'children' => false
+            ],
+            [
+                'dirtyName' => 'floatType',
+                'clearName' => 'float_type',
+                'strategyClassName' => 'Hydrator\Strategy\FloatStrategy',
+                'hasChildren' => false,
+                'hasManyChildren' => false,
+                'children' => false
+            ],
+            [
+                'dirtyName' => 'numberType',
+                'clearName' => 'number_type',
+                'strategyClassName' => 'Hydrator\Strategy\IntegerStrategy',
+                'hasChildren' => false,
+                'hasManyChildren' => false,
+                'children' => false
+            ],
+            [
+                'dirtyName' => 'methodType',
+                'clearName' => 'callMe',
+                'strategyClassName' => 'Hydrator\Strategy\DefaultStrategy',
+                'hasChildren' => false,
+                'hasManyChildren' => false,
+                'children' => false
+            ],
+            [
+                'dirtyName' => 'objectType',
+                'clearName' => 'object_type',
+                'strategyClassName' => 'Hydrator\Strategy\DefaultStrategy',
+                'hasChildren' => false,
+                'hasManyChildren' => false,
+                'children' => false
+            ],
+            [
+                'dirtyName' => 'sub',
+                'clearName' => 'inner',
+                'strategyClassName' => false,
+                'hasChildren' => true,
+                'hasManyChildren' => false,
+                'children' => [
+                    [
+                        'dirtyName' => 'Telephone',
+                        'clearName' => 'tel',
+                        'strategyClassName' => 'Hydrator\Strategy\DefaultStrategy',
+                        'hasChildren' => false,
+                        'hasManyChildren' => false,
+                        'children' => false
+                    ]
+                ]
+            ],
+            [
+                'dirtyName' => 'subArray',
+                'clearName' => 'innerArray',
+                'strategyClassName' => false,
+                'hasChildren' => true,
+                'hasManyChildren' => true,
+                'children' => [
+                    [
+                        'dirtyName' => 'Telephone',
+                        'clearName' => 'tel',
+                        'strategyClassName' => 'Hydrator\Strategy\DefaultStrategy',
+                        'hasChildren' => false,
+                        'hasManyChildren' => false,
+                        'children' => false
+                    ]
+                ]
+            ]
+        ];
+
+        $this->assertEquals($expected, $mapConfig);
+    }
+
     public function testHydrator()
     {
         /** @var Hydrator $hydrator */
         $hydrator = $this->app['hydrator.factory']('test');
         $this->assertInstanceOf(Hydrator::class, $hydrator);
-
-        $this->assertInternalType('array', $hydrator->getScheme());
-        $this->assertEquals($this->expectedScheme, $hydrator->getScheme());
     }
 }

@@ -2,9 +2,6 @@
 
 namespace Hydrator;
 
-use Hydrator\Strategy\DefaultStrategy;
-use Hydrator\Strategy\RecursiveStrategy;
-use Hydrator\Strategy\SchemeStrategy;
 use Silex\Application;
 
 class Hydrator
@@ -15,29 +12,19 @@ class Hydrator
     protected $app;
 
     /**
-     * @var
+     * @var array
      */
-    protected $scheme;
-
-    /**
-     * @var
-     */
-    protected $nameingMap;
-
-    /**
-     * @var
-     */
-    protected $valueStrategyMap;
+    protected $map = [];
 
     /**
      * Hydrator constructor.
      *
-     * @param $scheme
+     * @param array $hydratorItemsMap
      */
-    public function __construct($scheme)
+    public function __construct(array $hydratorItemsMap = [])
     {
-        $this->scheme = $scheme;
-        $this->doMapping();
+        $this->map = $hydratorItemsMap;
+        return $this;
     }
 
     /**
@@ -51,215 +38,177 @@ class Hydrator
         return $this;
     }
 
-    protected function doMapping()
-    {
-        $extractName = function ($name) {
-            $realName = $name;
-
-            if (is_array($name)) {
-                $realName = current($name);
-            }
-
-            return $realName;
-        };
-
-        $extractStrategy = function ($name) {
-            $strategyMap = [
-                'className' => DefaultStrategy::class,
-                'classType' => 'simple',
-                'classScheme' => null
-            ];
-
-            if (is_array($name)) {
-                $name = key($name);
-                $strategyMap['className'] = $name;
-            }
-
-            if (substr($name, 0, 1) == '~') {
-
-                $strategyMap['className'] = RecursiveStrategy::class;
-                $strategyMap['classType'] = 'object';
-
-                if (substr($name, -2) === '[]') {
-                    $strategyMap['classType'] = 'array';
-                    $strategyMap['classScheme'] = substr($name, 1, -2);
-                } else {
-                    $strategyMap['classScheme'] = substr($name, 1);
-                }
-            }
-
-            return $strategyMap;
-        };
-
-        foreach ($this->getScheme() as $dirtyName => $data) {
-            $this->nameingMap[$dirtyName] = $extractName($data);
-            $this->valueStrategyMap[$dirtyName] = $extractStrategy($data);
-        }
-    }
+//    /**
+//     * @param $name
+//     *
+//     * @return bool
+//     */
+//    protected function isDotted($name)
+//    {
+//        return strpos($name, '.') !== false;
+//    }
 
     /**
-     * Convert a name for extraction. If no naming strategy exists, the plain value is returned.
-     *
-     * @param string $dirtyName The name to convert.
-     *
-     * @return mixed
-     */
-    public function extractName($dirtyName)
-    {
-        $nameingMap = $this->nameingMap;
-
-        if (isset($nameingMap[$dirtyName])) {
-            return $nameingMap[$dirtyName];
-        }
-
-        return null;
-    }
-
-    /**
-     * Converts a value for extraction. If no strategy exists the plain value is returned.
-     *
-     * @param  string $dirtyName  The name of the strategy to use.
-     * @param  mixed  $value The value that should be converted.
-     * @param  mixed  $data  The object is optionally provided as context.
-     *
-     * @return mixed
-     */
-    public function extractValue($dirtyName, $value, $data = null)
-    {
-        $strategy = $this->getStrategy($dirtyName);
-        return $strategy->extract($value, $data);
-    }
-
-    /**
-     * Converts a value for hydration. If no naming strategy exists, the plain value is returned.
-     *
-     * @param string $clearName The name to convert.
-     *
-     * @return mixed
-     */
-    public function hydrateName($clearName)
-    {
-        $nameingMap = array_flip($this->nameingMap);
-
-        if (isset($nameingMap[$clearName])) {
-            return $nameingMap[$clearName];
-        }
-
-        return null;
-    }
-
-    /**
-     * Converts a value for hydration. If no strategy exists the plain value is returned.
-     *
-     * @param string $clearName   The name of the strategy to use.
-     * @param mixed  $value  The value that should be converted.
-     * @param array  $entity The whole data is optionally provided as context.
-     *
-     * @return mixed
-     */
-    public function hydrateValue($clearName, $value, $entity = null)
-    {
-        $dirtyName = $this->hydrateName($clearName);
-        $strategy = $this->getStrategy($dirtyName);
-
-        return $strategy->hydrate($clearName, $value, $entity);
-    }
-
-    /**
-     * @param array $data
-     * @param array $entity
-     *
-     * @return array
-     */
-    public function extract(array $data, $entity = [])
-    {
-        $intersect = array_intersect_key($this->nameingMap, $data);
-
-        foreach ($intersect as $dirtyName => $v) {
-            $name = $this->extractName($dirtyName);
-            $value = $this->extractValue($dirtyName, $data[$dirtyName], $data);
-
-            if (is_object($entity)) {
-                $entity->$name = $value;
-            } elseif (is_array($entity)) {
-                $entity[$name] = $value;
-            }
-        }
-
-        return $entity;
-    }
-
-    /**
+     * Extract from Object to array
      * @param      $entity
-     * @param null $fields
+     * @param null $fieldsToReturn
      *
-     * @return array
+     * @return string
      */
-    public function hydrate($entity, $fields = null)
+    public function extract($entity, $fieldsToReturn = null)
     {
-        $intersect = $fields ? array_intersect_key($this->nameingMap, array_flip($fields)) : $this->nameingMap;
+        $hydrateByMap = function ($entity, array $map) use (&$hydrateByMap) {
+            $result = [];
 
-        $retrieveValue = function ($name, $subject) {
-            if (is_object($subject) && property_exists($subject, $name)) {
-                return $subject->$name;
-            } elseif (is_object($subject) && method_exists($subject, $name)) {
-                return $subject->$name();
-            } elseif (is_array($subject) && isset($subject[$name])) {
-                return $subject[$name];
+            foreach ($map as $fieldMap) {
+                $clearValue = $this->valueRetriever($fieldMap['clearName'], $entity);
+                $dirtyValue = null;
+
+                if ($fieldMap['hasChildren'] !== false) {
+                    if ($fieldMap['hasManyChildren'] && is_array($clearValue)) {
+                        $dirtyValue = array_map(function ($val) use ($hydrateByMap, $fieldMap) {
+                            return $hydrateByMap($val, $fieldMap['children']);
+                        }, $clearValue);
+                    } elseif (is_array($clearValue)) {
+                        $dirtyValue = $hydrateByMap($clearValue, $fieldMap['children']);
+                    }
+                } else {
+                    $strategy = $this->buildStrategy($fieldMap['strategyClassName']);
+                    $dirtyValue = $strategy->extract($clearValue, $entity);
+                }
+
+                $result[$fieldMap['dirtyName']] = $dirtyValue;
             }
 
-            return null;
+            return $result;
         };
-        $result = [];
 
-        foreach ($intersect as $name => $clearName) {
-            $clearValue = $retrieveValue($clearName, $entity);
-            if($clearValue != null) {
-                $clearValue = $this->hydrateValue($clearName, $clearValue, $entity);
-            }
+        $result = $hydrateByMap($entity, $this->map);
 
-            $result[$name] = $clearValue;
+        if(!is_null($fieldsToReturn)) {
+            $result = array_intersect_key($result, array_flip($fieldsToReturn));
         }
 
         return $result;
     }
 
     /**
-     * @param $dirtyName
+     * Hydrate from array to Object
      *
-     * @return mixed
+     * @param array $data
+     * @param array $entity
+     *
+     * @return array
      */
-    protected function getStrategy($dirtyName)
+    public function hydrate(array $data, $entity = [])
     {
-        if (isset($this->valueStrategyMap[$dirtyName])) {
-            // we can use extract() - but IDE won't see vars
-            list($className, $classType, $classScheme) = array_values($this->valueStrategyMap[$dirtyName]);
-            $strategy = new $className();
+        $extractByMap = function (array $partialData, array $map) use (&$extractByMap) {
+            $result = [];
 
-            if ($classType === 'array') {
-                $strategy->useValueAsArrayOfObjects();
+            foreach ($map as $fieldMap) {
+                if (!array_key_exists($fieldMap['dirtyName'], $partialData)) {
+                    continue;
+                }
+
+                $dirtyValue = $partialData[$fieldMap['dirtyName']];
+
+                if ($fieldMap['hasChildren'] !== false) {
+                    if ($fieldMap['hasManyChildren']) {
+                        $clearValue = array_map(function ($val) use ($extractByMap, $fieldMap) {
+                            return $extractByMap($val, $fieldMap['children']);
+                        }, $dirtyValue);
+                    } else {
+                        $clearValue = $extractByMap($dirtyValue, $fieldMap['children']);
+                    }
+                } else {
+                    $strategy = $this->buildStrategy($fieldMap['strategyClassName']);
+
+                    $clearValue = $strategy->hydrate($dirtyValue, $partialData);
+                }
+
+                $result[$fieldMap['clearName']] = $clearValue;
             }
 
-            if (method_exists($strategy, 'setHydrator')) {
-                $hydrator = $this->app['hydrator.factory']($classScheme);
-                $strategy->setHydrator($hydrator);
-            }
+            return $result;
+        };
 
-            if (!is_null($this->app) && method_exists($strategy, 'setApp')) {
-                $strategy->setApp($this->app);
-            }
+        return $this->pushValues($extractByMap($data, $this->map, $entity), $entity);
+    }
 
-            return $strategy;
+    /**
+     * @param $result
+     * @param $entity
+     */
+    protected function pushValues($result, $entity)
+    {
+        if (is_array($entity)) {
+            return $result;
+        }
+
+        // It could be a Class definition
+        if (is_string($entity) && class_exists($entity)) {
+            return new $entity($result);
+        }
+
+        if (is_object($entity) && $entity instanceof \Serializable) {
+            return $entity->unserialize($result);
+        }
+
+        if (is_object($entity) && method_exists($entity, 'fill')) {
+            return $entity->fill($result);
+        }
+
+        return $entity;
+    }
+
+    /**
+     * @param $name
+     * @param $subject
+     *
+     * @return mixed|null
+     */
+    protected function valueRetriever($name, $subject)
+    {
+        if (is_object($subject) && property_exists($subject, $name)) {
+            return $subject->$name;
+        } elseif (is_object($subject) && method_exists($subject, $name)) {
+            return $subject->$name();
+        } elseif (is_array($subject) && array_key_exists($name, $subject)) {
+            return $subject[$name];
         }
 
         return null;
     }
 
     /**
+     * @param $name
+     * @param $value
+     * @param $subject
+     *
      * @return mixed
      */
-    public function getScheme()
+    protected function valueSetter($name, $value, $subject)
     {
-        return $this->scheme['scheme'];
+        if (is_object($subject)) {
+            return $subject->$name = $value;
+        } elseif (is_array($subject)) {
+            $subject[$name] = $value;
+        }
+    }
+
+    /**
+     * @param $className
+     *
+     * @return mixed
+     */
+    protected function buildStrategy($className)
+    {
+        $strategy = new $className();
+
+        if (!is_null($this->app) && method_exists($strategy, 'setApp')) {
+            $strategy->setApp($this->app);
+        }
+
+        return $strategy;
     }
 }

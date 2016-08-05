@@ -19,6 +19,29 @@ class DateTimeStrategy extends StrategyAbstract
      */
     public function extract($value, $data = null)
     {
+        if ($value instanceof UTCDatetime) {
+            $value = $value->toDateTime();
+        }
+
+        if ($value instanceof \DateTime) {
+            return $value->getTimestamp();
+        }
+
+        if (is_numeric($value)) {
+            return $value;
+        }
+
+        return strtotime($value);
+    }
+
+    /**
+     * @param null $value  The value that should be converted.
+     * @param null $entity The object is optionally provided as context.
+     *
+     * @return int
+     */
+    public function hydrate($value, $entity = null)
+    {
         // If this value is an integer, we will assume it is a UNIX timestamp's value
         // and format a DateTime object from this timestamp. This allows flexibility
         // when defining your date fields as they might be UNIX timestamps here.
@@ -38,30 +61,5 @@ class DateTimeStrategy extends StrategyAbstract
 
         // Finally, we will just assume this date is in the format used by default
         return \DateTime::createFromFormat($this->dateFormat, $value);
-    }
-
-    /**
-     * @param      $name   The name of the strategy to use.
-     * @param null $value  The value that should be converted.
-     * @param null $entity The object is optionally provided as context.
-     *
-     * @return int
-     */
-    public function hydrate($name, $value, $entity = null)
-    {
-        if ($value instanceof UTCDatetime) {
-            $value = $value->toDateTime();
-        }
-
-        if ($value instanceof \DateTime) {
-            return $value->getTimestamp();
-        }
-
-        if (is_numeric($value)) {
-            return $value;
-        }
-
-        return strtotime($value);
-
     }
 }
