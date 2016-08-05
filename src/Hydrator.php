@@ -38,18 +38,27 @@ class Hydrator
         return $this;
     }
 
-//    /**
-//     * @param $name
-//     *
-//     * @return bool
-//     */
-//    protected function isDotted($name)
-//    {
-//        return strpos($name, '.') !== false;
-//    }
+    /**
+     * @param $clearName
+     *
+     * @return bool|string
+     */
+    public function extractName($clearName)
+    {
+        $segments = $this->isDotted($clearName)
+            ? explode('.', $clearName)
+            : (array)$clearName;
+
+        $result = [];
+
+        return $this->convertDottedName($this->map, $segments, 'extract', $result)
+            ? implode('.', $result)
+            : false;
+    }
 
     /**
      * Extract from Object to array
+     *
      * @param      $entity
      * @param null $fieldsToReturn
      *
@@ -61,7 +70,7 @@ class Hydrator
             $result = [];
 
             foreach ($map as $fieldMap) {
-                $clearValue = $this->valueRetriever($fieldMap['clearName'], $entity);
+                $clearValue = $this->retrieveValue($fieldMap['clearName'], $entity);
                 $dirtyValue = null;
 
                 if ($fieldMap['hasChildren'] !== false) {
@@ -85,11 +94,29 @@ class Hydrator
 
         $result = $hydrateByMap($entity, $this->map);
 
-        if(!is_null($fieldsToReturn)) {
+        if (!is_null($fieldsToReturn)) {
             $result = array_intersect_key($result, array_flip($fieldsToReturn));
         }
 
         return $result;
+    }
+
+    /**
+     * @param $clearName
+     *
+     * @return bool|string
+     */
+    public function hydrateName($clearName)
+    {
+        $segments = $this->isDotted($clearName)
+            ? explode('.', $clearName)
+            : (array)$clearName;
+
+        $result = [];
+
+        return $this->convertDottedName($this->map, $segments, 'hydrate', $result)
+            ? implode('.', $result)
+            : false;
     }
 
     /**
@@ -167,7 +194,7 @@ class Hydrator
      *
      * @return mixed|null
      */
-    protected function valueRetriever($name, $subject)
+    protected function retrieveValue($name, $subject)
     {
         if (is_object($subject) && property_exists($subject, $name)) {
             return $subject->$name;
@@ -182,18 +209,55 @@ class Hydrator
 
     /**
      * @param $name
-     * @param $value
-     * @param $subject
      *
-     * @return mixed
+     * @return bool
      */
-    protected function valueSetter($name, $value, $subject)
+    protected function isDotted($name)
     {
-        if (is_object($subject)) {
-            return $subject->$name = $value;
-        } elseif (is_array($subject)) {
-            $subject[$name] = $value;
+        return strpos($name, '.') !== false;
+    }
+
+    /**
+     * @param        $map
+     * @param        $segments
+     * @param array  $result
+     * @param string $direction
+     *
+     * @return bool
+     */
+    protected function convertDottedName($map, $segments, $direction, &$result = [])
+    {
+        list($nameToFind, $nameToChange) = $direction == 'extract'
+            ? ['clearName', 'dirtyName']
+            : ['dirtyName', 'clearName'];
+
+        $search_text = array_shift($segments);
+
+        $filtered = array_filter($map, function ($el) use ($search_text, $nameToFind) {
+            return $el[$nameToFind] == $search_text;
+        });
+
+        if (empty($filtered)) {
+            return false;
         }
+
+        $founded = reset($filtered);
+        $result[] = $founded[$nameToChange];
+
+        if (empty($segments)) {
+            return true;
+        }
+
+        if ($founded['hasChildren']) {
+            if ($founded['hasManyChildren']) {
+                $index = array_shift($segments);
+                $result[] = $index;
+            }
+
+            return $this->convertDottedName($founded['children'], $segments, $direction, $result);
+        }
+
+        return true;
     }
 
     /**
