@@ -94,7 +94,7 @@ class Hydrator
 
         $result = $hydrateByMap($entity, $this->map);
 
-        if (!is_null($fieldsToReturn)) {
+        if (!is_null($fieldsToReturn) && empty($fieldsToReturn) === false) {
             $result = array_intersect_key($result, array_flip($fieldsToReturn));
         }
 

@@ -211,6 +211,26 @@ class ExtractStrategyTest extends ProviderTest
         $this->assertInternalType('string', $result['methodType']);
         $this->assertEquals('success', $result['methodType']);
     }
+
+    public function testEmptyFieldsToReturn()
+    {
+        /** @var Hydrator $hydrator */
+        $hydrator = $this->app['hydrator.factory']('test');
+        $result = $hydrator->extract(['group_id' => '123', 'external_id' => 123, 'boolean_type' => 1], []);
+        $this->assertEquals([
+            'groupId' => '123',
+            'externalId' => 123,
+            'booleanType' => 1,
+            'id' => null,
+            'datetime' => null,
+            'floatType' => null,
+            'numberType' => null,
+            'methodType' => null,
+            'objectType' => null,
+            'sub' => null,
+            'subArray' => null
+        ], $result);
+    }
 }
 
 class ExtractObject {
