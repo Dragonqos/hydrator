@@ -41,7 +41,9 @@ class ProviderTest extends WebTestCase
     ];
 
     protected $expectedSubScheme = [
-        'Telephone' => 'tel'
+        'Telephone' => [
+            'Hydrator\Strategy\IntegerStrategy' => 'tel'
+        ]
     ];
 
     /**
@@ -174,7 +176,7 @@ class ProviderTest extends WebTestCase
                     [
                         'dirtyName' => 'Telephone',
                         'clearName' => 'tel',
-                        'strategyClassName' => 'Hydrator\Strategy\DefaultStrategy',
+                        'strategyClassName' => 'Hydrator\Strategy\IntegerStrategy',
                         'hasChildren' => false,
                         'hasManyChildren' => false,
                         'children' => false
@@ -191,7 +193,7 @@ class ProviderTest extends WebTestCase
                     [
                         'dirtyName' => 'Telephone',
                         'clearName' => 'tel',
-                        'strategyClassName' => 'Hydrator\Strategy\DefaultStrategy',
+                        'strategyClassName' => 'Hydrator\Strategy\IntegerStrategy',
                         'hasChildren' => false,
                         'hasManyChildren' => false,
                         'children' => false

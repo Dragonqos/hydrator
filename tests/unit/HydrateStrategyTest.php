@@ -18,7 +18,7 @@ class HydrateStrategyTest extends ProviderTest
     {
         /** @var Hydrator $hydrator */
         $hydrator = $this->app['hydrator.factory']('test');
-        
+
         $stdClass = new \stdClass();
         $result = $hydrator->hydrate(['groupId' => '123', 'externalId' => 123, 'booleanType' => 1], $stdClass);
         $this->assertEquals((object) ['group_id' => '123', 'external_id' => 123, 'boolean_type' => true], $result);
@@ -177,5 +177,18 @@ class HydrateStrategyTest extends ProviderTest
         $this->assertInternalType('object', $result['object_type']);
         $this->assertInstanceOf(\stdClass::class, $result['object_type']);
         $this->assertEquals('value', $result['object_type']->key);
+    }
+
+    public function testHydrateValue()
+    {
+        $hydrator = $this->app['hydrator.factory']('test');
+        $result = $hydrator->hydrateValue('datetime', '1470930276');
+
+        $this->assertInstanceOf(\DateTime::class, $result);
+
+        $hydrator = $this->app['hydrator.factory']('test');
+        $result = $hydrator->hydrateValue('sub.Telephone', '234');
+
+        $this->assertInternalType('int', $result);
     }
 }

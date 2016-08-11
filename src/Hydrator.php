@@ -57,6 +57,23 @@ class Hydrator
     }
 
     /**
+     * @param $dirtyName
+     * @param $value
+     *
+     * @return mixed
+     */
+    public function extractValue($dirtyName, $value)
+    {
+        $segments = $this->isDotted($dirtyName)
+            ? explode('.', $dirtyName)
+            : (array) $dirtyName;
+
+        $this->convertDottedValue($this->map, $segments, 'extract', $value);
+
+        return $value;
+    }
+
+    /**
      * Extract from Object to array
      *
      * @param      $entity
@@ -66,33 +83,7 @@ class Hydrator
      */
     public function extract($entity, $fieldsToReturn = null)
     {
-        $hydrateByMap = function ($entity, array $map) use (&$hydrateByMap) {
-            $result = [];
-
-            foreach ($map as $fieldMap) {
-                $clearValue = $this->retrieveValue($fieldMap['clearName'], $entity);
-                $dirtyValue = null;
-
-                if ($fieldMap['hasChildren'] !== false) {
-                    if ($fieldMap['hasManyChildren'] && is_array($clearValue)) {
-                        $dirtyValue = array_map(function ($val) use ($hydrateByMap, $fieldMap) {
-                            return $hydrateByMap($val, $fieldMap['children']);
-                        }, $clearValue);
-                    } elseif (is_array($clearValue)) {
-                        $dirtyValue = $hydrateByMap($clearValue, $fieldMap['children']);
-                    }
-                } else {
-                    $strategy = $this->buildStrategy($fieldMap['strategyClassName']);
-                    $dirtyValue = $strategy->extract($clearValue, $entity);
-                }
-
-                $result[$fieldMap['dirtyName']] = $dirtyValue;
-            }
-
-            return $result;
-        };
-
-        $result = $hydrateByMap($entity, $this->map);
+        $result = $this->extractByMap($entity, $this->map);
 
         if (!is_null($fieldsToReturn) && empty($fieldsToReturn) === false) {
             $result = array_intersect_key($result, array_flip($fieldsToReturn));
@@ -120,6 +111,23 @@ class Hydrator
     }
 
     /**
+     * @param $clearName
+     * @param $value
+     *
+     * @return bool|string
+     */
+    public function hydrateValue($clearName, $value)
+    {
+        $segments = $this->isDotted($clearName)
+            ? explode('.', $clearName)
+            : (array) $clearName;
+
+        $this->convertDottedValue($this->map, $segments, 'hydrate', $value);
+
+        return $value;
+    }
+
+    /**
      * Hydrate from array to Object
      *
      * @param array $data
@@ -129,37 +137,8 @@ class Hydrator
      */
     public function hydrate(array $data, $entity = [])
     {
-        $extractByMap = function (array $partialData, array $map) use (&$extractByMap) {
-            $result = [];
-
-            foreach ($map as $fieldMap) {
-                if (!array_key_exists($fieldMap['dirtyName'], $partialData)) {
-                    continue;
-                }
-
-                $dirtyValue = $partialData[$fieldMap['dirtyName']];
-
-                if ($fieldMap['hasChildren'] !== false) {
-                    if ($fieldMap['hasManyChildren']) {
-                        $clearValue = array_map(function ($val) use ($extractByMap, $fieldMap) {
-                            return $extractByMap($val, $fieldMap['children']);
-                        }, $dirtyValue);
-                    } else {
-                        $clearValue = $extractByMap($dirtyValue, $fieldMap['children']);
-                    }
-                } else {
-                    $strategy = $this->buildStrategy($fieldMap['strategyClassName']);
-
-                    $clearValue = $strategy->hydrate($dirtyValue, $partialData);
-                }
-
-                $result[$fieldMap['clearName']] = $clearValue;
-            }
-
-            return $result;
-        };
-
-        return $this->pushValues($extractByMap($data, $this->map, $entity), $entity);
+        $hydrated = $this->hydrateByMap($data, $this->map);
+        return $this->pushValues($hydrated, $entity);
     }
 
     /**
@@ -172,8 +151,8 @@ class Hydrator
             return $result;
         }
 
-        $fillObject = function($object, $values) {
-            foreach($values as $name => $value) {
+        $fillObject = function ($object, $values) {
+            foreach ($values as $name => $value) {
                 $object->$name = $value;
             }
 
@@ -194,7 +173,7 @@ class Hydrator
             return $entity->fill($result);
         }
 
-        if(is_object($entity)) {
+        if (is_object($entity)) {
             return $fillObject($entity, $result);
         }
 
@@ -238,7 +217,7 @@ class Hydrator
      *
      * @return bool
      */
-    protected function convertDottedName($map, $segments, $direction, &$result = [])
+    protected function convertDottedName(array $map, array $segments, $direction, &$result = [])
     {
         list($nameToFind, $nameToChange) = $direction == 'extract'
             ? ['clearName', 'dirtyName']
@@ -271,6 +250,122 @@ class Hydrator
         }
 
         return true;
+    }
+
+    /**
+     * @param        $map
+     * @param        $segments
+     * @param string $direction
+     * @param array  $value
+     *
+     * @return bool
+     */
+    protected function convertDottedValue(array $map, array $segments, $direction, &$value)
+    {
+        list($nameToFind, $nameToReturn, $methodToCall) = $direction == 'extract'
+            ? ['clearName', 'dirtyName', 'extractByMap']
+            : ['dirtyName', 'clearName', 'hydrateByMap'];
+
+        $search_text = array_shift($segments);
+
+        $filtered = array_filter($map, function ($el) use ($search_text, $nameToFind) {
+            return $el[$nameToFind] == $search_text;
+        });
+
+        if (empty($filtered)) {
+            return false;
+        }
+
+        $founded = reset($filtered);
+
+        if (sizeof($segments) == 0) {
+
+            $result = $this->$methodToCall([$founded[$nameToFind] => $value], $map);
+            $value = $result[$founded[$nameToReturn]];
+
+            return true;
+        }
+
+        // got next till the end of dotted value
+        if ($founded['hasChildren']) {
+            if ($founded['hasManyChildren']) {
+                $index = array_shift($segments);
+                $result[] = $index;
+            }
+
+            return $this->convertDottedValue($founded['children'], $segments, $direction, $value);
+        }
+
+        return false;
+    }
+
+    /**
+     * @param array $partialData
+     * @param array $map
+     *
+     * @return array
+     */
+    protected function hydrateByMap(array $partialData, array $map)
+    {
+        $result = [];
+
+        foreach ($map as $fieldMap) {
+            if (!array_key_exists($fieldMap['dirtyName'], $partialData)) {
+                continue;
+            }
+
+            $dirtyValue = $partialData[$fieldMap['dirtyName']];
+
+            if ($fieldMap['hasChildren'] !== false) {
+                if ($fieldMap['hasManyChildren']) {
+                    $clearValue = array_map(function ($val) use ($fieldMap) {
+                        return $this->hydrateByMap($val, $fieldMap['children']);
+                    }, $dirtyValue);
+                } else {
+                    $clearValue = $this->hydrateByMap($dirtyValue, $fieldMap['children']);
+                }
+            } else {
+                $strategy = $this->buildStrategy($fieldMap['strategyClassName']);
+                $clearValue = $strategy->hydrate($dirtyValue, $partialData);
+            }
+
+            $result[$fieldMap['clearName']] = $clearValue;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param       $entity
+     * @param array $map
+     *
+     * @return array
+     */
+    protected function extractByMap($entity, array $map)
+    {
+        $result = [];
+
+        foreach ($map as $fieldMap) {
+            $clearValue = $this->retrieveValue($fieldMap['clearName'], $entity);
+            $dirtyValue = null;
+
+            if ($fieldMap['hasChildren'] !== false) {
+                if ($fieldMap['hasManyChildren'] && is_array($clearValue)) {
+                    $dirtyValue = array_map(function ($val) use ($fieldMap) {
+                        return $this->extractByMap($val, $fieldMap['children']);
+                    }, $clearValue);
+                } elseif (is_array($clearValue)) {
+                    $dirtyValue = $this->extractByMap($clearValue, $fieldMap['children']);
+                }
+            } else {
+                $strategy = $this->buildStrategy($fieldMap['strategyClassName']);
+                $dirtyValue = $strategy->extract($clearValue, $entity);
+            }
+
+            $result[$fieldMap['dirtyName']] = $dirtyValue;
+        }
+
+        return $result;
     }
 
     /**

@@ -20,4 +20,5 @@ test:
             ~subScheme[]: innerArray
 subScheme:
     scheme:
-        Telephone: tel
+        Telephone:
+            Hydrator\Strategy\IntegerStrategy: tel

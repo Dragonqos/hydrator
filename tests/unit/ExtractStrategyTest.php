@@ -231,6 +231,19 @@ class ExtractStrategyTest extends ProviderTest
             'subArray' => null
         ], $result);
     }
+
+    public function testExtractValue()
+    {
+        $hydrator = $this->app['hydrator.factory']('test');
+        $result = $hydrator->extractValue('datetime', new \DateTime());
+
+        $this->assertInternalType('int', $result);
+
+        $hydrator = $this->app['hydrator.factory']('test');
+        $result = $hydrator->extractValue('inner.tel', '234');
+
+        $this->assertInternalType('int', $result);
+    }
 }
 
 class ExtractObject {
