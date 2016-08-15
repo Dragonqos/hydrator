@@ -22,18 +22,19 @@ class ExtractStrategyTest extends ProviderTest
         $this->assertInternalType('integer', $result['booleanType']);
 
         $result = $hydrator->extract(['group_id' => '123', 'external_id' => 123, 'boolean_type' => 1]);
+
         $this->assertEquals([
             'groupId' => '123',
             'externalId' => 123,
             'booleanType' => 1,
             'id' => null,
-            'datetime' => null,
-            'floatType' => null,
-            'numberType' => null,
+            'datetime' => false,
+            'floatType' => 0.0,
+            'numberType' => 0,
             'methodType' => null,
             'objectType' => null,
             'sub' => null,
-            'subArray' => null
+            'subArray' => []
         ], $result);
     }
 
@@ -217,18 +218,19 @@ class ExtractStrategyTest extends ProviderTest
         /** @var Hydrator $hydrator */
         $hydrator = $this->app['hydrator.factory']('test');
         $result = $hydrator->extract(['group_id' => '123', 'external_id' => 123, 'boolean_type' => 1], []);
+
         $this->assertEquals([
             'groupId' => '123',
             'externalId' => 123,
             'booleanType' => 1,
             'id' => null,
-            'datetime' => null,
-            'floatType' => null,
-            'numberType' => null,
+            'datetime' => false,
+            'floatType' => 0.0,
+            'numberType' => 0,
             'methodType' => null,
             'objectType' => null,
             'sub' => null,
-            'subArray' => null
+            'subArray' => []
         ], $result);
     }
 

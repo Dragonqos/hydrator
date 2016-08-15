@@ -318,11 +318,15 @@ class Hydrator
 
             if ($fieldMap['hasChildren'] !== false) {
                 if ($fieldMap['hasManyChildren']) {
-                    $clearValue = array_map(function ($val) use ($fieldMap) {
-                        return $this->hydrateByMap($val, $fieldMap['children']);
-                    }, $dirtyValue);
+                    $clearValue = !empty($dirtyValue)
+                        ? array_map(function ($val) use ($fieldMap) {
+                            return $this->hydrateByMap($val, $fieldMap['children']);
+                        }, $dirtyValue)
+                        : [];
                 } else {
-                    $clearValue = $this->hydrateByMap($dirtyValue, $fieldMap['children']);
+                    $clearValue = !empty($dirtyValue)
+                        ? $this->hydrateByMap($dirtyValue, $fieldMap['children'])
+                        : null;
                 }
             } else {
                 $strategy = $this->buildStrategy($fieldMap['strategyClassName']);
@@ -350,12 +354,16 @@ class Hydrator
             $dirtyValue = null;
 
             if ($fieldMap['hasChildren'] !== false) {
-                if ($fieldMap['hasManyChildren'] && is_array($clearValue)) {
-                    $dirtyValue = array_map(function ($val) use ($fieldMap) {
-                        return $this->extractByMap($val, $fieldMap['children']);
-                    }, $clearValue);
-                } elseif (is_array($clearValue)) {
-                    $dirtyValue = $this->extractByMap($clearValue, $fieldMap['children']);
+                if ($fieldMap['hasManyChildren']) {
+                    $dirtyValue = !empty($clearValue)
+                        ? array_map(function ($val) use ($fieldMap) {
+                                return $this->extractByMap($val, $fieldMap['children']);
+                            }, $clearValue)
+                        : [];
+                } else {
+                    $dirtyValue = !empty($clearValue)
+                        ? $this->extractByMap($clearValue, $fieldMap['children'])
+                        : null;
                 }
             } else {
                 $strategy = $this->buildStrategy($fieldMap['strategyClassName']);
