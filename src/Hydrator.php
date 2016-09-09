@@ -145,7 +145,7 @@ class Hydrator
      * @param $result
      * @param $entity
      */
-    protected function pushValues($result, $entity)
+    public function pushValues($result, $entity)
     {
         if (is_array($entity)) {
             return $result;
