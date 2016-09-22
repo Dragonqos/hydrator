@@ -59,6 +59,11 @@ class DateTimeStrategy extends StrategyAbstract
             return $time;
         }
 
+        if (preg_match('/^(\d{4})-(\d{1,2})-(\d{1,2})T(\d{1,2}):(\d{1,2}):(\d{1,2})$/', $value)) {
+            $time = \DateTime::createFromFormat('Y-m-d\TH:i:s', $value);
+            return $time;
+        }
+
         // Finally, we will just assume this date is in the format used by default
         return \DateTime::createFromFormat($this->dateFormat, $value);
     }
