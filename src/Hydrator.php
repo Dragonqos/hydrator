@@ -310,11 +310,23 @@ class Hydrator
         $result = [];
 
         foreach ($map as $fieldMap) {
-            if (!array_key_exists($fieldMap['dirtyName'], $partialData)) {
-                continue;
-            }
 
-            $dirtyValue = $partialData[$fieldMap['dirtyName']];
+            // get first
+            if($this->isDotted($fieldMap['dirtyName'])) {
+                $dotNotationHelper = new DotNotation($partialData);
+
+                if (!$dotNotationHelper->have($fieldMap['dirtyName'])) {
+                    continue;
+                }
+
+                $dirtyValue = $dotNotationHelper->get($fieldMap['dirtyName'], '100');
+            } else {
+                if (!array_key_exists($fieldMap['dirtyName'], $partialData)) {
+                    continue;
+                }
+
+                $dirtyValue = $partialData[$fieldMap['dirtyName']];
+            }
 
             if ($fieldMap['hasChildren'] !== false) {
                 if ($fieldMap['hasManyChildren']) {
@@ -334,9 +346,33 @@ class Hydrator
             }
 
             $result[$fieldMap['clearName']] = $clearValue;
+
         }
 
         return $result;
+    }
+
+    /**
+     * @param      $path
+     * @param      $array
+     * @param null $default
+     *
+     * @return null
+     */
+    protected function getByDotNotation($path, $array, $default = null)
+    {
+        if (!empty($path)) {
+            $keys = explode('.', $path);
+            foreach ($keys as $key) {
+                if (isset($array[$key])) {
+                    $array = $array[$key];
+                } else {
+                    return $default;
+                }
+            }
+        }
+
+        return $array;
     }
 
     /**
@@ -357,8 +393,8 @@ class Hydrator
                 if ($fieldMap['hasManyChildren']) {
                     $dirtyValue = !empty($clearValue)
                         ? array_map(function ($val) use ($fieldMap) {
-                                return $this->extractByMap($val, $fieldMap['children']);
-                            }, $clearValue)
+                            return $this->extractByMap($val, $fieldMap['children']);
+                        }, $clearValue)
                         : [];
                 } else {
                     $dirtyValue = !empty($clearValue)
