@@ -66,7 +66,7 @@ class Hydrator
     {
         $segments = $this->isDotted($dirtyName)
             ? explode('.', $dirtyName)
-            : (array) $dirtyName;
+            : (array)$dirtyName;
 
         $this->convertDottedValue($this->map, $segments, 'extract', $value);
 
@@ -88,6 +88,8 @@ class Hydrator
         if (!is_null($fieldsToReturn) && empty($fieldsToReturn) === false) {
             $result = array_intersect_key($result, array_flip($fieldsToReturn));
         }
+
+        $result = $this->convertDots($result);
 
         return $result;
     }
@@ -120,7 +122,7 @@ class Hydrator
     {
         $segments = $this->isDotted($clearName)
             ? explode('.', $clearName)
-            : (array) $clearName;
+            : (array)$clearName;
 
         $this->convertDottedValue($this->map, $segments, 'hydrate', $value);
 
@@ -138,6 +140,10 @@ class Hydrator
     public function hydrate(array $data, $entity = [])
     {
         $hydrated = $this->hydrateByMap($data, $this->map);
+
+        // convert dotted path to multiarray
+        $hydrated = $this->convertDots($hydrated);
+
         return $this->pushValues($hydrated, $entity);
     }
 
@@ -181,22 +187,45 @@ class Hydrator
     }
 
     /**
-     * @param $name
-     * @param $subject
+     * @param      $name
+     * @param      $subject
+     * @param null $default
      *
      * @return mixed|null
      */
-    protected function retrieveValue($name, $subject)
+    protected function retrieveValue($name, $subject, $default = null)
     {
-        if (is_object($subject) && property_exists($subject, $name)) {
-            return $subject->$name;
-        } elseif (is_object($subject) && method_exists($subject, $name)) {
-            return $subject->$name();
-        } elseif (is_array($subject) && array_key_exists($name, $subject)) {
-            return $subject[$name];
-        }
+        $entityToArray = function ($entity) {
+            if (method_exists($entity, 'toArray')) {
+                return $entity->toArray();
+            }
 
-        return null;
+            return (array)$entity;
+        };
+
+        $extractValue = function ($name, $subject, $default = null) {
+            if (is_object($subject) && property_exists($subject, $name)) {
+                return $subject->$name;
+            } elseif (is_object($subject) && method_exists($subject, $name)) {
+                return $subject->$name();
+            } elseif (is_array($subject) && array_key_exists($name, $subject)) {
+                return $subject[$name];
+            }
+
+            return $default;
+        };
+
+        if ($this->isDotted($name)) {
+            $dotNotationHelper = new DotNotation($entityToArray($subject));
+
+            if (!$dotNotationHelper->have($name)) {
+                return $default;
+            }
+
+            return $dotNotationHelper->get($name, null);
+        } else {
+            return $extractValue($name, $subject, $default);
+        }
     }
 
     /**
@@ -311,21 +340,9 @@ class Hydrator
 
         foreach ($map as $fieldMap) {
 
-            // get first
-            if($this->isDotted($fieldMap['dirtyName'])) {
-                $dotNotationHelper = new DotNotation($partialData);
-
-                if (!$dotNotationHelper->have($fieldMap['dirtyName'])) {
-                    continue;
-                }
-
-                $dirtyValue = $dotNotationHelper->get($fieldMap['dirtyName'], '100');
-            } else {
-                if (!array_key_exists($fieldMap['dirtyName'], $partialData)) {
-                    continue;
-                }
-
-                $dirtyValue = $partialData[$fieldMap['dirtyName']];
+            $dirtyValue = $this->retrieveValue($fieldMap['dirtyName'], $partialData, null);
+            if ($dirtyValue === null) {
+                continue;
             }
 
             if ($fieldMap['hasChildren'] !== false) {
@@ -386,7 +403,7 @@ class Hydrator
         $result = [];
 
         foreach ($map as $fieldMap) {
-            $clearValue = $this->retrieveValue($fieldMap['clearName'], $entity);
+            $clearValue = $this->retrieveValue($fieldMap['clearName'], $entity, null);
             $dirtyValue = null;
 
             if ($fieldMap['hasChildren'] !== false) {
@@ -410,6 +427,50 @@ class Hydrator
         }
 
         return $result;
+    }
+
+    /**
+     * @param $arr
+     *
+     * @return array
+     */
+    protected function convertDots($arr)
+    {
+        $newArr = [];
+
+        foreach ($arr as $key => $value) {
+            if (is_array($value)) {
+                $value = $this->convertDots($value);
+            }
+
+            $this->setOpt($newArr, $key, $value);
+        }
+
+        return $newArr;
+    }
+
+    /**
+     * @param $array_ptr
+     * @param $key
+     * @param $value
+     */
+    protected function setOpt(&$array_ptr, $key, $value)
+    {
+        $keys = explode('.', $key);
+
+        // extract the last key
+        $last_key = array_pop($keys);
+
+        // walk/build the array to the specified key
+        while ($arr_key = array_shift($keys)) {
+            if (!array_key_exists($arr_key, $array_ptr)) {
+                $array_ptr[$arr_key] = [];
+            }
+            $array_ptr = &$array_ptr[$arr_key];
+        }
+
+        // set the final key
+        $array_ptr[$last_key] = $value;
     }
 
     /**

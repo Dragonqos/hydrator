@@ -46,6 +46,12 @@ class ProviderTest extends WebTestCase
         ]
     ];
 
+    protected $expectedTest2Scheme = [
+        'groupId' => 'one.key',
+        'externalId' => 'two.key',
+        'sub.subScheme' => 'three'
+    ];
+
     /**
      * @return Application
      */
@@ -78,12 +84,16 @@ class ProviderTest extends WebTestCase
         ], $result);
 
         $result = $scheme->getAllScheme();
+
         $this->assertEquals([
             'test' => [
                 'scheme' => $this->expectedScheme
             ],
             'subScheme' => [
                 'scheme' => $this->expectedSubScheme
+            ],
+            'test2' => [
+                'scheme' => $this->expectedTest2Scheme
             ]
         ], $result);
     }

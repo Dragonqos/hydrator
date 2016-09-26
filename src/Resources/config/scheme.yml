@@ -22,3 +22,9 @@ subScheme:
     scheme:
         Telephone:
             Hydrator\Strategy\IntegerStrategy: tel
+
+test2:
+    scheme:
+        groupId: one.key
+        externalId: two.key
+        sub.subScheme: three

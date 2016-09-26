@@ -191,4 +191,26 @@ class HydrateStrategyTest extends ProviderTest
 
         $this->assertInternalType('int', $result);
     }
+
+    public function testDottedKeys()
+    {
+        $hydrator = $this->app['hydrator.factory']('test2');
+        $result = $hydrator->hydrate([
+            'groupId' => '123',
+            'externalId' => 123,
+            'sub' => [
+                'subScheme' => 'subschemeValue'
+            ]
+        ], []);
+
+        $this->assertEquals([
+            'one' => [
+                'key' => 123
+            ],
+            'two' => [
+                'key' => 123
+            ],
+            'three' => 'subschemeValue'
+        ], $result);
+    }
 }
