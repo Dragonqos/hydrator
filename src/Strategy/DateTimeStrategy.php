@@ -10,7 +10,7 @@ class DateTimeStrategy extends StrategyAbstract
      * @var string
      */
     protected $dateFormat = 'Y-m-d H:i:s';
-    
+
     /**
      * @param      $value The value that should be converted.
      * @param null $data  The object is optionally provided as context.
@@ -50,6 +50,10 @@ class DateTimeStrategy extends StrategyAbstract
             return $time->setTimestamp($value);
         }
 
+        if($this->validateDate($value, \DateTime::ATOM)) {
+            return \DateTime::createFromFormat(\DateTime::ATOM, $value);
+        }
+
         // If the value is in simply year, month, day format, we will instantiate the
         // DateTime instances from that format. Again, this provides for simple date
         // fields on the database, while still supporting Carbonized conversion.
@@ -60,11 +64,22 @@ class DateTimeStrategy extends StrategyAbstract
         }
 
         if (preg_match('/^(\d{4})-(\d{1,2})-(\d{1,2})T(\d{1,2}):(\d{1,2}):(\d{1,2})$/', $value)) {
-            $time = \DateTime::createFromFormat('Y-m-d\TH:i:s', $value);
-            return $time;
+            return \DateTime::createFromFormat('Y-m-d\TH:i:s', $value);
         }
 
         // Finally, we will just assume this date is in the format used by default
         return \DateTime::createFromFormat($this->dateFormat, $value);
+    }
+
+    /**
+     * @param        $date
+     * @param string $format
+     *
+     * @return bool
+     */
+    protected function validateDate($date, $format = 'Y-m-d H:i:s')
+    {
+        $d = \DateTime::createFromFormat($format, $date);
+        return $d && $d->format($format) == $date;
     }
 }
