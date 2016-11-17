@@ -341,8 +341,8 @@ class Hydrator
 
         foreach ($map as $fieldMap) {
 
-            $dirtyValue = $this->retrieveValue($fieldMap['dirtyName'], $partialData, null);
-            if ($dirtyValue === null) {
+            $dirtyValue = $this->retrieveValue($fieldMap['dirtyName'], $partialData, 'ValueNotFound');
+            if ($dirtyValue === 'ValueNotFound') {
                 continue;
             }
 
