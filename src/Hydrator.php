@@ -83,7 +83,7 @@ class Hydrator
      */
     public function extract($entity, $fieldsToReturn = null)
     {
-        $result = $this->extractByMap($entity, $this->map);
+        $result = $this->extractByMap($entity, $this->map, $entity);
 
         if (!is_null($fieldsToReturn) && empty($fieldsToReturn) === false) {
             $result = array_intersect_key($result, array_flip($fieldsToReturn));
@@ -331,10 +331,11 @@ class Hydrator
     /**
      * @param array $partialData
      * @param array $map
+     * @param array|null $originalData
      *
      * @return array
      */
-    protected function hydrateByMap(array $partialData, array $map)
+    protected function hydrateByMap(array $partialData, array $map, $originalData = null)
     {
         $result = [];
 
@@ -348,17 +349,17 @@ class Hydrator
             if ($fieldMap['hasChildren'] !== false) {
                 if ($fieldMap['hasManyChildren']) {
                     $clearValue = !empty($dirtyValue)
-                        ? array_map(function ($val) use ($fieldMap) {
-                            return $this->hydrateByMap($val, $fieldMap['children']);
+                        ? array_map(function ($val) use ($fieldMap, $originalData) {
+                            return $this->hydrateByMap($val, $fieldMap['children'], $originalData);
                         }, $dirtyValue)
                         : [];
                 } else {
                     $clearValue = !empty($dirtyValue)
-                        ? $this->hydrateByMap($dirtyValue, $fieldMap['children'])
+                        ? $this->hydrateByMap($dirtyValue, $fieldMap['children'], $originalData)
                         : null;
                 }
             } else {
-                $strategy = $this->buildStrategy($fieldMap['strategyClassName']);
+                $strategy = $this->buildStrategy($fieldMap['strategyClassName'], $originalData);
                 $clearValue = $strategy->hydrate($dirtyValue, $partialData);
             }
 
@@ -395,10 +396,11 @@ class Hydrator
     /**
      * @param       $entity
      * @param array $map
+     * @param       $originalData
      *
      * @return array
      */
-    protected function extractByMap($entity, array $map)
+    protected function extractByMap($entity, array $map, $originalData = null)
     {
         $result = [];
 
@@ -409,17 +411,17 @@ class Hydrator
             if ($fieldMap['hasChildren'] !== false) {
                 if ($fieldMap['hasManyChildren']) {
                     $dirtyValue = !empty($clearValue)
-                        ? array_map(function ($val) use ($fieldMap) {
-                            return $this->extractByMap($val, $fieldMap['children']);
+                        ? array_map(function ($val) use ($fieldMap, $originalData) {
+                            return $this->extractByMap($val, $fieldMap['children'], $originalData);
                         }, $clearValue)
                         : [];
                 } else {
                     $dirtyValue = !empty($clearValue)
-                        ? $this->extractByMap($clearValue, $fieldMap['children'])
+                        ? $this->extractByMap($clearValue, $fieldMap['children'], $originalData)
                         : null;
                 }
             } else {
-                $strategy = $this->buildStrategy($fieldMap['strategyClassName']);
+                $strategy = $this->buildStrategy($fieldMap['strategyClassName'], $originalData);
                 $dirtyValue = $strategy->extract($clearValue, $entity);
             }
 
@@ -475,16 +477,21 @@ class Hydrator
     }
 
     /**
-     * @param $className
+     * @param      $className
+     * @param null $originalData
      *
      * @return mixed
      */
-    protected function buildStrategy($className)
+    protected function buildStrategy($className, $originalData = null)
     {
         $strategy = new $className();
 
         if (!is_null($this->app) && method_exists($strategy, 'setApp')) {
             $strategy->setApp($this->app);
+        }
+
+        if(method_exists($strategy, 'setOriginalData')) {
+            $strategy->setOriginalData($originalData);
         }
 
         return $strategy;
