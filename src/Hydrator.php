@@ -139,7 +139,7 @@ class Hydrator
      */
     public function hydrate(array $data, $entity = [])
     {
-        $hydrated = $this->hydrateByMap($data, $this->map);
+        $hydrated = $this->hydrateByMap($data, $this->map, $data);
 
         // convert dotted path to multiarray
         $hydrated = $this->convertDots($hydrated);
