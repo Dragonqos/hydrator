@@ -101,7 +101,11 @@ class ProviderTest extends WebTestCase
     public function testHydratorItemMap()
     {
         $scheme = $this->app['hydrator.scheme']->getScheme('test');
-        $mapConfig = $this->app['hydrator.item.map']($scheme);
+
+        $map = HydratorItemMap::buildMap($this->app['hydrator.scheme'], $scheme);
+        $mapConfig = array_map(function($item) {
+                return $item->toArray();
+            }, $map);
 
         $expected = [
             [
@@ -218,7 +222,7 @@ class ProviderTest extends WebTestCase
     public function testHydrator()
     {
         /** @var Hydrator $hydrator */
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
         $this->assertInstanceOf(Hydrator::class, $hydrator);
     }
 }

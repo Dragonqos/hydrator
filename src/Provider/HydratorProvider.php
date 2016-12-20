@@ -4,6 +4,7 @@ namespace Hydrator\Provider;
 
 use Hydrator\Hydrator;
 use Hydrator\HydratorEvents;
+use Hydrator\HydratorFactory;
 use Hydrator\HydratorItemMap;
 use Hydrator\HydratorScheme;
 use Pimple\Container;
@@ -35,20 +36,9 @@ class HydratorProvider implements ServiceProviderInterface, EventListenerProvide
             return $scheme;
         };
 
-        $app['hydrator.item.map'] = $app->protect(function ($scheme) use ($app) {
-            $map = HydratorItemMap::buildMap($app['hydrator.scheme'], $scheme);
-
-            return array_map(function($item) {
-                return $item->toArray();
-            }, $map);
-        });
-
-        $app['hydrator.factory'] = $app->protect(function ($schemaName) use ($app) {
-            $scheme = $app['hydrator.scheme']->getScheme($schemaName);
-            $map = $app['hydrator.item.map']($scheme, $app['hydrator.scheme']);
-
-            return (new Hydrator($map))->setApp($app);
-        });
+        $app['hydrator.factory'] = function() use ($app) {
+            return new HydratorFactory($app, $app['hydrator.scheme']);
+        };
     }
 
     /**

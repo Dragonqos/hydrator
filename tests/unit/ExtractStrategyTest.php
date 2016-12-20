@@ -10,7 +10,7 @@ class ExtractStrategyTest extends ProviderTest
     public function testHydratorExtract()
     {
         /** @var Hydrator $hydrator */
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
         $result = $hydrator->extract(['group_id' => '123', 'external_id' => 123, 'boolean_type' => 1], ['groupId', 'externalId', 'booleanType']);
         $this->assertEquals([
             'groupId' => '123',
@@ -41,7 +41,7 @@ class ExtractStrategyTest extends ProviderTest
     public function testExtractSub()
     {
         /** @var Hydrator $hydrator */
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
         $result = $hydrator->extract(['_id' => 123, 'inner' => ['tel' => '+380']], ['id', 'sub']);
         $this->assertEquals(['id' => 123, 'sub' => ['Telephone' => '+380']], $result);
     }
@@ -49,7 +49,7 @@ class ExtractStrategyTest extends ProviderTest
     public function testExtractSubArray()
     {
         /** @var Hydrator $hydrator */
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
 
         $result = $hydrator->extract(['_id' => 123, 'innerArray' => [['tel' => '+7'], ['tel' => '+380']]], ['id', 'subArray']);
         $this->assertEquals(['id' => 123, 'subArray' => [['Telephone' => '+7'], ['Telephone' => '+380']]], $result);
@@ -58,7 +58,7 @@ class ExtractStrategyTest extends ProviderTest
     public function testExtractBooleanType()
     {
         /** @var Hydrator $hydrator */
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
         $result = $hydrator->extract(['boolean_type' => true], ['booleanType']);
         $this->assertEquals(['booleanType' => 1], $result);
 
@@ -84,7 +84,7 @@ class ExtractStrategyTest extends ProviderTest
         $timeString = '2016-07-27 16:19:58';
 
         /** @var Hydrator $hydrator */
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
 
         $result = $hydrator->extract(['datetime' => \DateTime::createFromFormat('Y-m-d H:i:s', $timeString)]);
         $this->assertArrayHasKey('datetime', $result);
@@ -110,7 +110,7 @@ class ExtractStrategyTest extends ProviderTest
     public function testExtractFloatType()
     {
         /** @var Hydrator $hydrator */
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
 
         $result = $hydrator->extract(['float_type' => 1]);
         $this->assertArrayHasKey('floatType', $result);
@@ -141,7 +141,7 @@ class ExtractStrategyTest extends ProviderTest
     public function testExtractEntityIdType()
     {
         /** @var Hydrator $hydrator */
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
 
         $result = $hydrator->extract(['_id' => 1]);
         $this->assertArrayHasKey('id', $result);
@@ -162,7 +162,7 @@ class ExtractStrategyTest extends ProviderTest
     public function testExtractNumberType()
     {
         /** @var Hydrator $hydrator */
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
 
         $result = $hydrator->extract(['number_type' => 1]);
         $this->assertArrayHasKey('numberType', $result);
@@ -188,7 +188,7 @@ class ExtractStrategyTest extends ProviderTest
     public function testExtractDefaultType()
     {
         /** @var Hydrator $hydrator */
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
 
         $result = $hydrator->extract(['object_type' => (object) ['key' => 'value']]);
         $this->assertInternalType('array', $result['objectType']);
@@ -206,7 +206,7 @@ class ExtractStrategyTest extends ProviderTest
     public function testMethodStrategy()
     {
         /** @var Hydrator $hydrator */
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
 
         $result = $hydrator->extract(new ExtractObject());
         $this->assertInternalType('string', $result['methodType']);
@@ -216,7 +216,7 @@ class ExtractStrategyTest extends ProviderTest
     public function testEmptyFieldsToReturn()
     {
         /** @var Hydrator $hydrator */
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
         $result = $hydrator->extract(['group_id' => '123', 'external_id' => 123, 'boolean_type' => 1], []);
 
         $this->assertEquals([
@@ -236,12 +236,12 @@ class ExtractStrategyTest extends ProviderTest
 
     public function testExtractValue()
     {
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
         $result = $hydrator->extractValue('datetime', new \DateTime());
 
         $this->assertInternalType('int', $result);
 
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
         $result = $hydrator->extractValue('inner.tel', '234');
 
         $this->assertInternalType('int', $result);
@@ -249,7 +249,7 @@ class ExtractStrategyTest extends ProviderTest
 
     public function testDottedKeys()
     {
-        $hydrator = $this->app['hydrator.factory']('test2');
+        $hydrator = $this->app['hydrator.factory']->build('test2');
         $result = $hydrator->extract([
             'one' => [
                 'key' => 123

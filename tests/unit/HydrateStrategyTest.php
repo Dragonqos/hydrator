@@ -9,7 +9,7 @@ class HydrateStrategyTest extends ProviderTest
     public function testHydratorHydrate()
     {
         /** @var Hydrator $hydrator */
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
         $result = $hydrator->hydrate(['groupId' => '123', 'externalId' => 123, 'booleanType' => 1]);
         $this->assertEquals(['group_id' => '123', 'external_id' => 123, 'boolean_type' => true], $result);
     }
@@ -17,7 +17,7 @@ class HydrateStrategyTest extends ProviderTest
     public function testHydrateToObject()
     {
         /** @var Hydrator $hydrator */
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
 
         $stdClass = new \stdClass();
         $result = $hydrator->hydrate(['groupId' => '123', 'externalId' => 123, 'booleanType' => 1], $stdClass);
@@ -30,7 +30,7 @@ class HydrateStrategyTest extends ProviderTest
     public function testHydrateSub()
     {
         /** @var Hydrator $hydrator */
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
 
         $result = $hydrator->hydrate(['id' => 123, 'sub' => ['Telephone' => '+380']]);
         $this->assertEquals(['_id' => 123, 'inner' => ['tel' => '+380']], $result);
@@ -39,7 +39,7 @@ class HydrateStrategyTest extends ProviderTest
     public function testHydrateSubArray()
     {
         /** @var Hydrator $hydrator */
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
 
         $result = $hydrator->hydrate(['id' => 123, 'subArray' => [['Telephone' => '+7'], ['Telephone' => '+380']]]);
         $this->assertEquals(['_id' => 123, 'innerArray' => [['tel' => '+7'], ['tel' => '+380']]], $result);
@@ -48,7 +48,7 @@ class HydrateStrategyTest extends ProviderTest
     public function testHydrateBooleanType()
     {
         /** @var Hydrator $hydrator */
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
         $result = $hydrator->hydrate(['booleanType' => 'true']);
         $this->assertEquals(['boolean_type' => true], $result);
 
@@ -69,7 +69,7 @@ class HydrateStrategyTest extends ProviderTest
         $dateString = '2016-07-27';
 
         /** @var Hydrator $hydrator */
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
         $result = $hydrator->hydrate(['datetime' => $timeStamp]);
         $this->assertArrayHasKey('datetime', $result);
         $this->assertInternalType('object', $result['datetime']);
@@ -100,7 +100,7 @@ class HydrateStrategyTest extends ProviderTest
     public function testHydrateFloatType()
     {
         /** @var Hydrator $hydrator */
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
         $result = $hydrator->hydrate(['floatType' => 1]);
         $this->assertEquals(['float_type' => 1.0], $result);
         $this->assertInternalType('float', $result['float_type']);
@@ -125,7 +125,7 @@ class HydrateStrategyTest extends ProviderTest
     public function testHydrateEntityIdType()
     {
         /** @var Hydrator $hydrator */
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
         $result = $hydrator->hydrate(['id' => 1]);
         $this->assertEquals(['_id' => 1], $result);
         $this->assertInternalType('integer', $result['_id']);
@@ -142,7 +142,7 @@ class HydrateStrategyTest extends ProviderTest
     public function testHydrateNumberType()
     {
         /** @var Hydrator $hydrator */
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
         $result = $hydrator->hydrate(['numberType' => 1]);
         $this->assertEquals(['number_type' => 1], $result);
         $this->assertInternalType('integer', $result['number_type']);
@@ -163,7 +163,7 @@ class HydrateStrategyTest extends ProviderTest
     public function testHydrateMethodType()
     {
         /** @var Hydrator $hydrator */
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
         $result = $hydrator->hydrate(['methodType' => 'test']);
         $this->assertInternalType('string', $result['callMe']);
         $this->assertEquals('test', $result['callMe']);
@@ -172,7 +172,7 @@ class HydrateStrategyTest extends ProviderTest
     public function testHydrateDefaultType()
     {
         /** @var Hydrator $hydrator */
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
         $result = $hydrator->hydrate(['objectType' => (object)['key' => 'value']]);
         $this->assertInternalType('object', $result['object_type']);
         $this->assertInstanceOf(\stdClass::class, $result['object_type']);
@@ -181,12 +181,12 @@ class HydrateStrategyTest extends ProviderTest
 
     public function testHydrateValue()
     {
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
         $result = $hydrator->hydrateValue('datetime', '1470930276');
 
         $this->assertInstanceOf(\DateTime::class, $result);
 
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
         $result = $hydrator->hydrateValue('sub.Telephone', '234');
 
         $this->assertInternalType('int', $result);
@@ -194,7 +194,7 @@ class HydrateStrategyTest extends ProviderTest
 
     public function testDottedKeys()
     {
-        $hydrator = $this->app['hydrator.factory']('test2');
+        $hydrator = $this->app['hydrator.factory']->build('test2');
         $result = $hydrator->hydrate([
             'groupId' => '123',
             'externalId' => 123,

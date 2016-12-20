@@ -9,7 +9,7 @@ class DottedNamesTest extends ProviderTest
     public function testNameExtract()
     {
         /** @var Hydrator $hydrator */
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
 
         $name = $hydrator->extractName('inner');
         $this->assertEquals('sub', $name);
@@ -27,7 +27,7 @@ class DottedNamesTest extends ProviderTest
     public function testNameHydrate()
     {
         /** @var Hydrator $hydrator */
-        $hydrator = $this->app['hydrator.factory']('test');
+        $hydrator = $this->app['hydrator.factory']->build('test');
 
         $name = $hydrator->hydrateName('sub');
         $this->assertEquals('inner', $name);
