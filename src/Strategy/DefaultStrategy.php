@@ -30,7 +30,7 @@ class DefaultStrategy extends StrategyAbstract
         if(is_string($value) || is_numeric($value)) {
             // filter all abnormal chars
             $value = str_ireplace('\ufffd', '', $value);
-            $value = preg_replace('/[^\w\s\.,:;+=\-_()~`?!@#$%^&*<>\'\"\/\[\]{}|\\\]+/iu', '', $value);
+            $value = preg_replace('/[^\w\d\s\.,:;+=\-_()~`?!@#$%^&*<>\'\"\/\[\]{}|\\\]+/iu', '', $value);
         }
 
         return $value;
