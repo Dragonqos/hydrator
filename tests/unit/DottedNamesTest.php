@@ -2,8 +2,6 @@
 
 namespace Hydrator;
 
-use Silex\Application;
-
 class DottedNamesTest extends ProviderTest
 {
     public function testNameExtract()
@@ -19,6 +17,9 @@ class DottedNamesTest extends ProviderTest
 
         $name = $hydrator->extractName('innerArray.0.tel');
         $this->assertEquals('subArray.0.Telephone', $name);
+
+        $name = $hydrator->extractName('innerArray.tel');
+        $this->assertEquals('subArray.Telephone', $name);
 
         $name = $hydrator->extractName('innerArray.0.tels');
         $this->assertEquals(false, $name);
@@ -37,6 +38,9 @@ class DottedNamesTest extends ProviderTest
 
         $name = $hydrator->hydrateName('subArray.0.Telephone');
         $this->assertEquals('innerArray.0.tel', $name);
+
+        $name = $hydrator->hydrateName('subArray.Telephone');
+        $this->assertEquals('innerArray.tel', $name);
 
         $name = $hydrator->hydrateName('subArray.0.Telephon');
         $this->assertEquals(false, $name);

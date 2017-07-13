@@ -272,7 +272,11 @@ class Hydrator
         if ($founded['hasChildren']) {
             if ($founded['hasManyChildren']) {
                 $index = array_shift($segments);
-                $result[] = $index;
+                if(is_numeric($index)) {
+                    $result[] = $index;
+                } else {
+                    array_unshift($segments, $index);
+                }
             }
 
             return $this->convertDottedName($founded['children'], $segments, $direction, $result);
